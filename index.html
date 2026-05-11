@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IEEE SPS — Lab Asset Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  /* ── IEEE SPS COLOR THEME — BLACK EDITION ── */
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --border: #1c3a52;
+    --accent: #0077b6;        /* IEEE SPS core blue */
+    --accent-bright: #00a8e0; /* SPS highlight blue */
+    --accent2: #00d4ff;       /* SPS cyan */
+    --accent3: #0096c7;       /* SPS mid-blue */
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --text: #e8f4fb;
+    --muted: #4a7a99;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    /* SPS gradient — official IEEE SPS blue spectrum */
+    --sps-grad: linear-gradient(135deg, #003d6b 0%, #0077b6 35%, #00a8e0 70%, #00d4ff 100%);
+    --sps-grad-vivid: linear-gradient(135deg, #0077b6 0%, #00a8e0 50%, #00d4ff 100%);
+    --sps-glow: 0 0 28px rgba(0,168,224,0.25);
+    --sps-glow-strong: 0 0 40px rgba(0,212,255,0.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; font-size: 14px; }
+
+  /* ── SPS AMBIENT GLOW ON BLACK ── */
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 15%, rgba(0,119,182,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse 45% 50% at 85% 85%, rgba(0,212,255,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse 30% 30% at 50% 50%, rgba(0,168,224,0.04) 0%, transparent 60%);
+  }
+
+  /* ── VIEW-ONLY LANDING ── */
+  #view-landing {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding:24px; gap:0; position:relative; z-index:1;
+  }
+  .landing-logo {
+    font-family: var(--mono); font-size:36px; font-weight:700; margin-bottom:4px;
+    background: var(--sps-grad-vivid); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; letter-spacing:0.08em; filter:drop-shadow(0 0 18px rgba(0,212,255,0.35));
+  }
+  .landing-tagline {
+    font-family:var(--mono); font-size:10px; color:var(--accent-bright); margin-bottom:6px;
+    letter-spacing:0.3em; text-transform:uppercase; opacity:0.7;
+  }
+  .landing-sub { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:40px; letter-spacing:0.12em; text-transform:uppercase; }
+  .landing-card {
+    background: #080808; border:1px solid var(--border); border-radius:18px;
+    padding:32px 36px; width:380px; max-width:100%;
+    box-shadow: 0 0 0 1px rgba(0,168,224,0.08), var(--sps-glow-strong);
+    position:relative; overflow:hidden;
+  }
+  .landing-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: var(--sps-grad-vivid);
+  }
+  .landing-card h2 { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .landing-card p { font-size:12px; color:var(--muted); margin-bottom:22px; line-height:1.6; }
+  .landing-actions { display:flex; flex-direction:column; gap:10px; }
+  .btn-landing-view {
+    background: transparent; border:1px solid rgba(0,212,255,0.4); color:var(--accent2);
+    border-radius:10px; padding:12px 20px; font-family:var(--sans); font-size:13px;
+    font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center;
+  }
+  .btn-landing-view:hover { background:rgba(0,212,255,0.08); border-color:var(--accent2); box-shadow:0 0 12px rgba(0,212,255,0.15); }
+  .btn-landing-admin {
+    background: var(--sps-grad-vivid); border:none; color:#fff;
+    border-radius:10px; padding:12px 20px; font-family:var(--sans); font-size:13px;
+    font-weight:700; cursor:pointer; transition:all 0.2s;
+    box-shadow: 0 0 20px rgba(0,168,224,0.3);
+  }
+  .btn-landing-admin:hover { box-shadow:0 0 30px rgba(0,212,255,0.45); transform:translateY(-1px); }
+  .landing-note { font-size:11px; color:var(--muted); text-align:center; margin-top:16px; font-family:var(--mono); opacity:0.6; }
+  /* Decorative SPS wave behind landing card */
+  .landing-deco {
+    position:absolute; width:500px; height:500px; border-radius:50%;
+    border:1px solid rgba(0,168,224,0.06); pointer-events:none;
+    animation: pulse-ring 4s ease-in-out infinite;
+  }
+  .landing-deco:nth-child(2) { width:700px; height:700px; animation-delay:1.5s; border-color:rgba(0,168,224,0.04); }
+  @keyframes pulse-ring { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.04);opacity:0.5} }
+
+  /* ── ADMIN LOGIN OVERLAY ── */
+  #admin-login-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92);
+    backdrop-filter:blur(4px); z-index:500; align-items:center; justify-content:center; padding:24px;
+  }
+  #admin-login-overlay.open { display:flex; }
+  .admin-login-box {
+    background:#080808; border:1px solid var(--border); border-radius:18px;
+    padding:36px; width:390px; max-width:100%;
+    box-shadow:0 0 0 1px rgba(0,168,224,0.08), var(--sps-glow-strong);
+    position:relative; overflow:hidden;
+  }
+  .admin-login-box::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: var(--sps-grad-vivid);
+  }
+  .admin-login-box .login-logo {
+    font-family:var(--mono); font-size:20px; font-weight:700; margin-bottom:4px;
+    background: var(--sps-grad-vivid); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; filter:drop-shadow(0 0 10px rgba(0,212,255,0.3));
+  }
+  .admin-login-box .login-sub { font-size:11px; color:var(--muted); margin-bottom:26px; font-family:var(--mono); letter-spacing:0.1em; text-transform:uppercase; }
+  .login-error { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.4); border-radius:8px; padding:10px 14px; font-size:12px; color:var(--danger); margin-bottom:14px; display:none; }
+  .login-error.show { display:block; }
+
+  /* ── HEADER ── */
+  .header {
+    background: #050505; border-bottom:1px solid rgba(0,168,224,0.15);
+    padding:0 24px; display:flex; align-items:center; justify-content:space-between;
+    height:58px; position:sticky; top:0; z-index:100;
+    box-shadow: 0 1px 0 rgba(0,168,224,0.1), 0 4px 30px rgba(0,0,0,0.6);
+  }
+  /* SPS blue accent line on header top */
+  .header::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background: var(--sps-grad-vivid);
+  }
+  .logo {
+    font-family:var(--mono); font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px;
+    background: var(--sps-grad-vivid); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; letter-spacing:0.06em; filter:drop-shadow(0 0 8px rgba(0,212,255,0.2));
+  }
+  .logo .sep { -webkit-text-fill-color:rgba(0,168,224,0.4); }
+  .logo .sub { -webkit-text-fill-color:var(--muted); font-size:12px; font-weight:400; }
+  .header-right { display:flex; align-items:center; gap:10px; }
+  .nav { display:flex; gap:2px; }
+  .nav-btn {
+    background:none; border:none; color:var(--muted); font-family:var(--sans);
+    font-size:13px; padding:6px 13px; border-radius:6px; cursor:pointer;
+    transition:all 0.15s; font-weight:500;
+  }
+  .nav-btn:hover { background:rgba(0,168,224,0.08); color:var(--accent-bright); }
+  .nav-btn.active {
+    background:rgba(0,168,224,0.12); color:var(--accent2);
+    box-shadow:inset 0 0 0 1px rgba(0,212,255,0.15);
+  }
+
+  /* ── USER CHIP ── */
+  .user-chip {
+    display:flex; align-items:center; gap:8px;
+    background:rgba(0,168,224,0.06); border:1px solid rgba(0,168,224,0.2);
+    border-radius:20px; padding:4px 12px 4px 6px;
+  }
+  .user-avatar {
+    width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; font-family:var(--mono); flex-shrink:0;
+  }
+  .user-info { display:flex; flex-direction:column; line-height:1.2; }
+  .user-name { font-size:12px; font-weight:600; }
+  .user-role { font-size:10px; font-family:var(--mono); }
+  .role-admin { color:var(--accent-bright); }
+  .role-viewer { color:var(--accent2); }
+  .logout-btn { background:none; border:1px solid rgba(0,168,224,0.2); border-radius:6px; color:var(--muted); font-family:var(--sans); font-size:11px; padding:4px 8px; cursor:pointer; margin-left:4px; transition:all 0.15s; }
+  .logout-btn:hover { color:var(--danger); border-color:var(--danger); }
+  .admin-login-header-btn {
+    background: var(--sps-grad-vivid); border:none; border-radius:8px; color:#fff;
+    font-family:var(--sans); font-size:12px; font-weight:700; padding:6px 16px; cursor:pointer;
+    transition:all 0.2s; box-shadow:0 0 12px rgba(0,168,224,0.25);
+  }
+  .admin-login-header-btn:hover { box-shadow:0 0 20px rgba(0,212,255,0.4); }
+
+  /* ── VIEWER BANNER ── */
+  .viewer-banner {
+    background: linear-gradient(90deg, rgba(0,168,224,0.1) 0%, rgba(0,119,182,0.04) 60%, transparent 100%);
+    border-bottom:1px solid rgba(0,168,224,0.15);
+    padding:7px 24px; font-size:12px; color:var(--accent-bright);
+    font-family:var(--mono); display:flex; align-items:center; gap:8px; position:relative; z-index:1;
+  }
+
+  /* ── MAIN ── */
+  .main { padding:24px; max-width:1200px; margin:0 auto; position:relative; z-index:1; }
+
+  /* ── STATS ── */
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:24px; }
+  .stat-card {
+    background:#080808; border:1px solid rgba(0,168,224,0.12); border-radius:12px; padding:16px 18px;
+    position:relative; overflow:hidden; transition:border-color 0.2s;
+  }
+  .stat-card:hover { border-color:rgba(0,168,224,0.28); }
+  .stat-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:var(--sps-grad-vivid); opacity:0.3; }
+  .stat-label { font-size:10px; color:var(--muted); font-family:var(--mono); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px; }
+  .stat-value { font-size:30px; font-weight:700; }
+  .c-blue { color:var(--accent-bright); text-shadow:0 0 20px rgba(0,168,224,0.4); }
+  .c-green { color:var(--accent2); text-shadow:0 0 20px rgba(0,212,255,0.3); }
+  .c-warn { color:var(--warn); }
+  .c-red { color:var(--danger); }
+  .c-purple { color:#c084fc; }
+
+  /* ── TOOLBAR ── */
+  .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .search-box { flex:1; min-width:180px; background:#080808; border:1px solid rgba(0,168,224,0.15); border-radius:8px; padding:8px 12px; color:var(--text); font-family:var(--sans); font-size:13px; outline:none; transition:all 0.15s; }
+  .search-box:focus { border-color:var(--accent-bright); box-shadow:0 0 0 3px rgba(0,168,224,0.08); }
+  .search-box::placeholder { color:var(--muted); }
+  select { background:#080808; border:1px solid rgba(0,168,224,0.15); border-radius:8px; padding:8px 12px; color:var(--text); font-family:var(--sans); font-size:13px; outline:none; cursor:pointer; transition:all 0.15s; }
+  select:focus { border-color:var(--accent-bright); box-shadow:0 0 0 3px rgba(0,168,224,0.08); }
+
+  /* ── BUTTONS ── */
+  .btn { background: var(--sps-grad-vivid); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; box-shadow:0 0 12px rgba(0,168,224,0.2); }
+  .btn:hover { box-shadow:0 0 20px rgba(0,212,255,0.35); transform:translateY(-1px); }
+  .btn.sec { background:#111; color:var(--text); border:1px solid rgba(0,168,224,0.2); box-shadow:none; }
+  .btn.sec:hover { border-color:var(--accent-bright); background:#141414; transform:none; box-shadow:none; }
+  .btn.danger { background:linear-gradient(135deg,#991b1b,#ef4444); box-shadow:none; }
+  .btn.danger:hover { box-shadow:0 0 14px rgba(239,68,68,0.3); }
+  .btn.success { background:linear-gradient(135deg,#065f46,#10b981); box-shadow:none; }
+  .btn.warn-btn { background:linear-gradient(135deg,#92400e,#f59e0b); color:#000; box-shadow:none; }
+  .btn.sm { padding:5px 10px; font-size:12px; }
+
+  /* ── TABLE ── */
+  .table-wrap { background:#080808; border:1px solid rgba(0,168,224,0.12); border-radius:12px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:600px; }
+  th { text-align:left; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-bright); padding:10px 14px; background:#0a0a0a; border-bottom:1px solid rgba(0,168,224,0.1); font-weight:400; white-space:nowrap; opacity:0.7; }
+  td { padding:11px 14px; border-bottom:1px solid rgba(0,168,224,0.06); font-size:13px; color:var(--text); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(0,168,224,0.04); }
+
+  /* ── BADGES ── */
+  .badge { display:inline-block; font-size:10px; font-family:var(--mono); padding:3px 8px; border-radius:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .b-custom { background:rgba(0,119,182,0.2); color:var(--accent-bright); border:1px solid rgba(0,168,224,0.15); }
+  .b-admin { background:rgba(0,168,224,0.15); color:var(--accent-bright); border:1px solid rgba(0,168,224,0.2); }
+  .b-viewer { background:rgba(0,212,255,0.1); color:var(--accent2); border:1px solid rgba(0,212,255,0.15); }
+
+  .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; flex-shrink:0; }
+  .dot-ok { background:var(--accent2); box-shadow:0 0 6px rgba(0,212,255,0.5); }
+  .dot-out { background:var(--warn); box-shadow:0 0 6px rgba(245,158,11,0.4); }
+  .dot-low { background:var(--danger); box-shadow:0 0 6px rgba(239,68,68,0.4); }
+
+  .tag { color:var(--accent-bright); font-family:var(--mono); font-size:11px; }
+  .pdf-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(0,119,182,0.15); color:var(--accent-bright); border:1px solid rgba(0,168,224,0.15); border-radius:4px; padding:2px 7px; font-size:10px; font-family:var(--mono); }
+  .auth-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(0,150,199,0.1); color:var(--accent2); border:1px solid rgba(0,212,255,0.12); border-radius:4px; padding:2px 7px; font-size:10px; font-family:var(--mono); }
+  .form-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.2); border-radius:4px; padding:2px 7px; font-size:10px; font-family:var(--mono); }
+  .no-form-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(239,68,68,0.08); color:#ef4444; border:1px solid rgba(239,68,68,0.15); border-radius:4px; padding:2px 7px; font-size:10px; font-family:var(--mono); }
+
+  .added-by-chip {
+    display:inline-flex; align-items:center; gap:4px;
+    background:rgba(0,153,204,0.1); border:1px solid rgba(0,153,204,0.2);
+    border-radius:4px; padding:2px 7px; font-size:10px; font-family:var(--mono);
+    color:var(--accent-bright); white-space:nowrap;
+  }
+  .added-by-chip .ab-dot { width:5px; height:5px; border-radius:50%; background:var(--accent-bright); flex-shrink:0; }
+
+  .action-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .qty-controls { display:flex; align-items:center; gap:6px; }
+  .qty-btn { width:24px; height:24px; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:4px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; line-height:1; }
+  .qty-btn:hover { background:var(--border); }
+
+  /* ── MODAL ── */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:flex-start; justify-content:center; overflow-y:auto; padding:32px 16px; }
+  .overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; width:560px; max-width:100%; margin:auto; box-shadow:var(--sps-glow); }
+  .modal h3 { font-family:var(--mono); font-size:12px; color:var(--accent-bright); margin-bottom:20px; text-transform:uppercase; letter-spacing:0.1em; }
+  .form-group { margin-bottom:13px; }
+  .form-group label { display:block; font-size:11px; font-family:var(--mono); text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:5px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-family:var(--sans); font-size:13px; outline:none; transition:border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent-bright); }
+  .form-group input:disabled { opacity:0.5; cursor:not-allowed; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .sec-label { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-bright); margin:16px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+  hr.div { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+  /* Checkbox row */
+  .check-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; }
+  .check-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent-bright); cursor:pointer; flex-shrink:0; }
+  .check-row label { font-size:12px; color:var(--text); cursor:pointer; margin:0; font-family:var(--sans); text-transform:none; letter-spacing:0; }
+
+  /* ── UPLOAD ── */
+  .upload-zone { border:1.5px dashed var(--border); border-radius:10px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.2s; background:var(--bg); }
+  .upload-zone:hover { border-color:var(--accent-bright); }
+  .upload-zone input[type=file] { display:none; }
+  .upload-zone p { font-size:12px; color:var(--muted); margin-top:6px; }
+  .upload-success { background:rgba(16,185,129,0.1); border:1px solid var(--success); border-radius:8px; padding:10px 14px; font-size:12px; color:#10b981; display:flex; align-items:center; gap:8px; }
+
+  /* ── PAGES ── */
+  .page { display:none; } .page.active { display:block; }
+
+  /* ── HISTORY ── */
+  .history-item { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; font-size:12px; gap:12px; }
+  .history-item:last-child { border-bottom:none; }
+
+  /* ── EMPTY ── */
+  .empty { text-align:center; padding:52px 24px; color:var(--muted); }
+  .empty .ico { font-size:36px; margin-bottom:12px; }
+
+  /* ── TOAST ── */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13px; color:var(--text); z-index:999; transform:translateY(80px); opacity:0; transition:all 0.3s; pointer-events:none; max-width:320px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.ok { border-color:var(--accent2); color:var(--accent2); }
+  .toast.err { border-color:var(--danger); color:var(--danger); }
+
+  /* ── OVERDUE ── */
+  .overdue { color:var(--danger); }
+
+  /* ── USER MANAGEMENT ── */
+  .user-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .user-card-info { display:flex; align-items:center; gap:12px; }
+  .user-card-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:var(--mono); flex-shrink:0; }
+  .user-card-actions { display:flex; gap:6px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+
+  /* ── PILL TABS ── */
+  .pill-tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .pill-tab { padding:6px 16px; border-radius:20px; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:12px; cursor:pointer; font-family:var(--mono); transition:all 0.15s; }
+  .pill-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  /* ── MULTI-CHECKOUT ── */
+  .mco-layout { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+  @media (max-width:900px) { .mco-layout { grid-template-columns:1fr; } }
+  .mco-asset-list { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .mco-asset-search { padding:12px 14px; border-bottom:1px solid var(--border); background:var(--surface2); display:flex; gap:8px; }
+  .mco-asset-search input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text); font-family:var(--sans); font-size:13px; outline:none; }
+  .mco-asset-search input:focus { border-color:var(--accent-bright); }
+  .mco-asset-row { display:flex; align-items:center; gap:12px; padding:11px 14px; border-bottom:1px solid var(--border); transition:background 0.1s; }
+  .mco-asset-row:last-child { border-bottom:none; }
+  .mco-asset-row:hover { background:rgba(0,153,204,0.03); }
+  .mco-asset-row.selected { background:rgba(0,153,204,0.07); border-left:3px solid var(--accent-bright); padding-left:11px; }
+  .mco-asset-row.unavailable { opacity:0.4; pointer-events:none; }
+  .mco-cb { width:17px; height:17px; accent-color:var(--accent-bright); cursor:pointer; flex-shrink:0; }
+  .mco-asset-info { flex:1; min-width:0; }
+  .mco-asset-name { font-weight:500; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mco-asset-meta { font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px; }
+  .mco-qty-input { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:5px 8px; color:var(--text); font-family:var(--mono); font-size:13px; text-align:center; outline:none; }
+  .mco-qty-input:focus { border-color:var(--accent-bright); }
+  .mco-panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; position:sticky; top:76px; }
+  .mco-panel h3 { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-bright); margin-bottom:16px; }
+  .mco-cart { margin-bottom:16px; max-height:180px; overflow-y:auto; }
+  .mco-cart-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; }
+  .mco-cart-item:last-child { border-bottom:none; }
+  .mco-cart-empty { text-align:center; color:var(--muted); font-size:12px; padding:16px 0; font-family:var(--mono); }
+  .mco-divider { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-bright); padding-bottom:6px; border-bottom:1px solid var(--border); margin:14px 0 10px; }
+
+  /* ── BULK RETURN ── */
+  .bulk-return-bar { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--border); border-radius:12px 12px 0 0; }
+  .bulk-return-bar .btn { padding:5px 14px; font-size:12px; }
+  .bulk-cb { width:16px; height:16px; accent-color:var(--warn); cursor:pointer; }
+
+  /* ── CATEGORY MANAGEMENT ── */
+  .cat-list { display:flex; flex-direction:column; gap:8px; }
+  .cat-row { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .cat-color-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .cat-badge-preview { font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:4px; font-weight:700; text-transform:uppercase; }
+
+  /* ── CONSOLIDATED CHECKOUT (admin) ── */
+  .consol-filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .consol-filters input, .consol-filters select { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:7px 12px; color:var(--text); font-family:var(--sans); font-size:13px; outline:none; }
+  .consol-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px; }
+  .consol-group { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .consol-group-title { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
+  .consol-group-item { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid var(--border); }
+  .consol-group-item:last-child { border-bottom:none; }
+
+  /* ── CONSUMABLE CHECKOUT NOTE ── */
+  .consumable-note { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:var(--warn); margin-bottom:14px; display:flex; gap:8px; align-items:flex-start; }
+
+  /* ── MOBILE ── */
+  @media (max-width:640px) {
+    .header { padding:0 12px; height:52px; }
+    .logo .sub { display:none; }
+    .logo { font-size:12px; }
+    .admin-login-header-btn { font-size:11px; padding:5px 10px; }
+    .logout-btn { font-size:11px; padding:4px 8px; }
+    .user-name, .user-role { display:none; }
+    .user-chip { padding:4px 8px 4px 4px; }
+
+    .nav { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; gap:0; }
+    .nav::-webkit-scrollbar { display:none; }
+    .nav-btn { padding:6px 10px; font-size:11px; white-space:nowrap; }
+
+    .main { padding:12px; }
+
+    .stats-row { grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+    .stat-card { padding:12px 14px; }
+    .stat-value { font-size:22px; }
+    .stat-label { font-size:9px; }
+
+    .toolbar { gap:8px; flex-direction:column; }
+    .toolbar .search-box { min-width:0; width:100%; }
+    .toolbar select { width:100%; }
+    .toolbar .btn { width:100%; text-align:center; }
+
+    .table-wrap { border-radius:10px; }
+    table { min-width:unset; display:block; }
+    thead { display:none; }
+    tbody { display:block; }
+    tr { display:block; padding:12px 14px; border-bottom:1px solid rgba(0,168,224,0.08); }
+    tr:last-child { border-bottom:none; }
+    tr:hover td { background:none; }
+    td { display:flex; align-items:center; justify-content:space-between; padding:4px 0; border:none; font-size:12px; gap:8px; flex-wrap:wrap; }
+    td[data-label]:before { content:attr(data-label); font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); white-space:nowrap; min-width:75px; flex-shrink:0; }
+    td.td-actions { justify-content:flex-end; margin-top:6px; }
+    td.td-actions:before { display:none; }
+    td.td-check { display:none; }
+
+    .form-row { grid-template-columns:1fr; gap:8px; }
+    .modal { padding:20px 16px; border-radius:12px; margin:12px; width:calc(100% - 24px); }
+    .modal-actions { flex-direction:column-reverse; }
+    .modal-actions .btn { width:100%; text-align:center; }
+
+    .mco-layout { grid-template-columns:1fr; gap:12px; }
+    .mco-panel { position:static; }
+    .mco-cart { max-height:140px; }
+
+    .bulk-return-bar { flex-wrap:wrap; gap:8px; }
+    .bulk-return-bar .btn { font-size:11px; padding:5px 10px; }
+
+    .history-item { flex-direction:column; gap:4px; }
+
+    .pill-tabs { gap:6px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+    .pill-tabs::-webkit-scrollbar { display:none; }
+    .pill-tab { white-space:nowrap; font-size:11px; padding:5px 12px; }
+
+    .section-title { flex-direction:column; align-items:flex-start; gap:6px; }
+
+    .consol-filters { flex-direction:column; }
+    .consol-filters input, .consol-filters select { width:100%; }
+    .consol-summary { grid-template-columns:1fr; }
+
+    .toast { bottom:16px; right:12px; left:12px; max-width:unset; font-size:12px; }
+
+    .action-row { gap:4px; justify-content:flex-end; }
+    .btn.sm { padding:4px 8px; font-size:11px; }
+
+    .landing-logo { font-size:26px; }
+    .landing-card { padding:24px 18px; }
+
+    .overlay { padding:16px 12px; }
+    .admin-login-box { padding:24px 18px; }
+  }
+
+  @media (max-width:900px) and (min-width:641px) {
+    .main { padding:16px; }
+    .stats-row { grid-template-columns:repeat(3,1fr); }
+    .mco-layout { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ VIEW-ONLY LANDING ═══════════════════════ -->
+<div id="view-landing">
+  <div class="landing-logo">IEEE · SPS</div>
+  <div class="landing-sub">Lab Asset Manager</div>
+  <div class="landing-card">
+    <h2>Welcome to the Lab</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">Browse inventory and activity logs without an account, or sign in as an admin to manage assets.</p>
+    <div class="landing-actions">
+      <button class="btn-landing-view" onclick="enterViewOnly()">👁 Browse as Viewer</button>
+      <button class="btn-landing-admin" onclick="openAdminLoginOverlay()">🔐 Admin Sign In</button>
+    </div>
+    <div class="landing-note">IEEE Signal Processing Society · Lab Assets</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ADMIN LOGIN OVERLAY ═══════════════════════ -->
+<div id="admin-login-overlay">
+  <div class="admin-login-box">
+    <div class="login-logo">IEEE / SPS</div>
+    <div class="login-sub">Admin Login — Lab Asset Manager</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Incorrect username or password.</div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn sec" style="flex:1" onclick="closeAdminLoginOverlay()">Cancel</button>
+      <button class="btn" style="flex:1" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="app-shell" style="display:none">
+
+  <div class="header">
+    <div class="logo">
+      IEEE<span class="sep">/</span>SPS
+      <span class="sep">·</span>
+      <span class="sub">Lab Asset Manager</span>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showPage('assets')">Inventory</button>
+      <button class="nav-btn" onclick="showPage('checkout')">Checked Out</button>
+      <button class="nav-btn admin-only" id="nav-multico" onclick="showPage('multico')" style="display:none">🛒 Multi-Checkout</button>
+      <button class="nav-btn admin-only" id="nav-consol" onclick="showPage('consol')" style="display:none">📋 Consolidated</button>
+      <button class="nav-btn" onclick="showPage('history')">Activity Log</button>
+      <button class="nav-btn admin-only" id="nav-cats" onclick="showPage('cats')" style="display:none">🏷 Categories</button>
+      <button class="nav-btn admin-only" id="nav-users" onclick="showPage('users')" style="display:none">👥 Users</button>
+    </div>
+    <div class="header-right" id="header-right">
+      <!-- filled by applyRoleUI -->
+    </div>
+  </div>
+
+  <div class="viewer-banner" id="viewer-banner" style="display:none">
+    👁 You are in <strong style="margin:0 4px">view-only mode</strong> — all changes require admin access.
+    <button class="admin-login-header-btn" style="margin-left:auto" onclick="openAdminLoginOverlay()">Admin Sign In</button>
+  </div>
+
+  <div class="main">
+
+    <!-- INVENTORY PAGE -->
+    <div id="page-assets" class="page active">
+      <div class="stats-row" id="stats-row"></div>
+      <div class="toolbar">
+        <input class="search-box" type="text" id="search-input" placeholder="Search assets, location…" oninput="renderTable()">
+        <select id="filter-cat" onchange="renderTable()">
+          <option value="">All categories</option>
+        </select>
+        <select id="filter-status" onchange="renderTable()">
+          <option value="">All statuses</option>
+          <option value="Available">Available</option>
+          <option value="Checked Out">Checked Out</option>
+          <option value="Low Stock">Low Stock</option>
+        </select>
+        <button class="btn admin-only" id="add-asset-btn" onclick="openAddModal()" style="display:none">+ Add Asset</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:22%">Name</th>
+            <th style="width:12%">Category</th>
+            <th style="width:13%">Available</th>
+            <th style="width:10%">Status</th>
+            <th style="width:11%">Location</th>
+            <th style="width:16%">Added By</th>
+            <th id="th-actions" style="width:16%">Actions</th>
+          </tr></thead>
+          <tbody id="asset-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHECKED OUT PAGE (users see read-only, admins see full with return buttons) -->
+    <div id="page-checkout" class="page">
+      <div class="stats-row" id="co-stats"></div>
+      <!-- Checkout filter toolbar -->
+      <div class="toolbar" style="margin-bottom:12px">
+        <input class="search-box" type="text" id="co-search" placeholder="Search by name, USN, asset…" oninput="renderCheckouts()">
+        <select id="co-filter-cat" onchange="renderCheckouts()">
+          <option value="">All categories</option>
+        </select>
+        <select id="co-filter-form" onchange="renderCheckouts()">
+          <option value="">Form: Any</option>
+          <option value="yes">Form Submitted</option>
+          <option value="no">No Form</option>
+        </select>
+        <select id="co-filter-overdue" onchange="renderCheckouts()">
+          <option value="">All dates</option>
+          <option value="overdue">Overdue Only</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <div class="bulk-return-bar" id="bulk-return-bar" style="display:none">
+          <input type="checkbox" class="bulk-cb" id="cb-select-all" title="Select all" onchange="toggleSelectAll(this.checked)">
+          <span id="bulk-count" style="font-size:12px;color:var(--muted);font-family:var(--mono)">0 selected</span>
+          <button class="btn warn-btn" onclick="bulkReturn()">↩ Return Selected</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th id="th-co-cb" style="width:36px"></th>
+            <th>Asset</th>
+            <th>Category</th>
+            <th>Member Name</th>
+            <th>USN</th>
+            <th>IEEE No.</th>
+            <th>Authority</th>
+            <th>Date Out</th>
+            <th>Return By</th>
+            <th>Qty</th>
+            <th>Form</th>
+            <th id="th-co-action">Action</th>
+          </tr></thead>
+          <tbody id="co-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MULTI-CHECKOUT PAGE (admin only) -->
+    <div id="page-multico" class="page">
+      <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:16px;">
+        Select items → set quantities → fill member details → confirm
+      </div>
+      <div class="mco-layout">
+        <div>
+          <div class="mco-asset-list">
+            <div class="mco-asset-search">
+              <input type="text" id="mco-search" placeholder="Search assets…" oninput="renderMcoList()">
+              <select id="mco-cat" onchange="renderMcoList()" style="font-size:12px;padding:6px 10px">
+                <option value="">All</option>
+              </select>
+            </div>
+            <div id="mco-asset-tbody"></div>
+          </div>
+        </div>
+        <div class="mco-panel">
+          <h3>Checkout Cart</h3>
+          <div class="mco-cart" id="mco-cart"><div class="mco-cart-empty">No items selected</div></div>
+          <div class="mco-divider">Member Details</div>
+          <div class="form-group" style="margin-bottom:10px"><label>Full Name *</label><input type="text" id="mco-name" placeholder="Full name"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>College USN *</label><input type="text" id="mco-usn" placeholder="e.g. 1XX22CS045"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>IEEE Membership No. *</label><input type="text" id="mco-ieee" placeholder="e.g. 97XXXXXXX"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Phone / Email</label><input type="text" id="mco-contact" placeholder="Optional"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Signing Authority *</label><input type="text" id="mco-authority" placeholder="Faculty / Advisor name"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Designation</label><input type="text" id="mco-desig" placeholder="e.g. Faculty Advisor"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Purpose of Use</label><textarea id="mco-purpose" rows="2" placeholder="Project name, reason…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Expected Return Date</label><input type="date" id="mco-return"></div>
+          <div class="check-row" style="margin-bottom:14px">
+            <input type="checkbox" id="mco-hasform">
+            <label for="mco-hasform">✅ Physical asset request form has been submitted</label>
+          </div>
+          <button class="btn success" style="width:100%" onclick="confirmMultiCheckout()">✅ Confirm Checkout</button>
+          <button class="btn sec" style="width:100%;margin-top:8px" onclick="clearMcoCart()">Clear Cart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSOLIDATED CHECKOUT PAGE (admin only) -->
+    <div id="page-consol" class="page">
+      <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:16px;">
+        Consolidated view — all active checkouts grouped &amp; filterable
+      </div>
+      <div class="consol-filters">
+        <input type="text" id="consol-search" placeholder="Search member, USN, asset…" oninput="renderConsol()" style="flex:1;min-width:180px">
+        <select id="consol-cat" onchange="renderConsol()">
+          <option value="">All categories</option>
+        </select>
+        <select id="consol-form" onchange="renderConsol()">
+          <option value="">Form: Any</option>
+          <option value="yes">Form Submitted</option>
+          <option value="no">No Form</option>
+        </select>
+        <select id="consol-overdue" onchange="renderConsol()">
+          <option value="">All dates</option>
+          <option value="overdue">Overdue Only</option>
+        </select>
+        <button class="btn sm" onclick="exportConsolCSV()">⬇ Export CSV</button>
+      </div>
+      <div id="consol-summary-row" class="consol-summary"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Member</th><th>USN</th><th>IEEE No.</th><th>Asset</th><th>Category</th>
+            <th>Qty</th><th>Date Out</th><th>Return By</th><th>Form</th><th>Authority</th><th>By</th>
+          </tr></thead>
+          <tbody id="consol-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE (visible to all) -->
+    <div id="page-history" class="page">
+      <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:14px;">Activity log — last 100 events</div>
+      <div class="table-wrap">
+        <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Newest first</div>
+        <div id="history-list"></div>
+      </div>
+    </div>
+
+    <!-- CATEGORY MANAGEMENT PAGE (admin only) -->
+    <div id="page-cats" class="page">
+      <div class="section-title">
+        <span>Asset Categories</span>
+        <button class="btn sm" onclick="openAddCatModal()">+ New Category</button>
+      </div>
+      <div class="cat-list" id="cat-list"></div>
+    </div>
+
+    <!-- USER MANAGEMENT PAGE (admin only) -->
+    <div id="page-users" class="page">
+      <div class="section-title">
+        <span>Admin Accounts</span>
+        <button class="btn sm" onclick="openAddUserModal()">+ New Admin</button>
+      </div>
+      <div id="user-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;"></div>
+      <div class="section-title" style="margin-top:24px">
+        <span>Account Audit — Who Did What</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Admin</th><th>Position</th><th>Action</th><th>Date</th>
+          </tr></thead>
+          <tbody id="admin-log-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- ADD/EDIT ASSET MODAL -->
+<div class="overlay" id="add-modal" onclick="if(event.target===this)closeModal('add-modal')">
+  <div class="modal">
+    <h3 id="modal-title">Add Asset</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Asset Name *</label><input type="text" id="f-name" placeholder="e.g. Arduino Uno R3"></div>
+      <div class="form-group"><label>Category *</label>
+        <select id="f-cat"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Total Quantity</label><input type="number" id="f-qty" value="1" min="1"></div>
+      <div class="form-group"><label>Unit (pcs / grams / meters)</label><input type="text" id="f-unit" placeholder="pcs"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Location / Shelf</label><input type="text" id="f-loc" placeholder="e.g. Shelf A2"></div>
+      <div class="form-group"><label>Low Stock Alert (qty)</label><input type="number" id="f-low" value="2" min="0"></div>
+    </div>
+    <div class="form-group"><label>Notes / Specs</label><textarea id="f-notes" rows="2" placeholder="Condition, purchase date, specs…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn" onclick="saveAsset()">Save Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="overlay" id="checkout-modal" onclick="if(event.target===this)closeModal('checkout-modal')">
+  <div class="modal">
+    <h3>Check Out Asset</h3>
+    <div id="co-consumable-note" class="consumable-note" style="display:none">
+      ⚠️ <div><strong>Consumable item</strong> — this item will not appear in the return queue. Quantity will be decremented from stock.</div>
+    </div>
+    <div class="sec-label">Member Details</div>
+    <div class="form-row">
+      <div class="form-group"><label>Full Name *</label><input type="text" id="co-name" placeholder="Full name"></div>
+      <div class="form-group"><label>College USN *</label><input type="text" id="co-usn" placeholder="e.g. 1XX22CS045"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>IEEE Membership No. *</label><input type="text" id="co-ieee" placeholder="e.g. 97XXXXXXX"></div>
+      <div class="form-group"><label>Phone / Email</label><input type="text" id="co-contact" placeholder="Optional"></div>
+    </div>
+    <hr class="div">
+    <div class="sec-label">Asset &amp; Authorization</div>
+    <div class="form-group"><label>Asset</label><input type="text" id="co-asset-name" disabled></div>
+    <div class="form-row">
+      <div class="form-group"><label>Quantity to Check Out</label><input type="number" id="co-qty" value="1" min="1"></div>
+      <div class="form-group" id="co-return-group"><label>Expected Return Date</label><input type="date" id="co-return"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Signing Authority Name *</label><input type="text" id="co-authority" placeholder="Faculty / Advisor name"></div>
+      <div class="form-group"><label>Designation</label><input type="text" id="co-desig" placeholder="e.g. Faculty Advisor"></div>
+    </div>
+    <div class="form-group"><label>Purpose of Use</label><textarea id="co-purpose" rows="2" placeholder="Project name, reason for borrowing…"></textarea></div>
+    <hr class="div">
+    <div class="sec-label">Form Submission</div>
+    <div class="check-row" style="margin-bottom:14px">
+      <input type="checkbox" id="co-hasform">
+      <label for="co-hasform">✅ Physical asset request form has been submitted / attached</label>
+    </div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('co-file').click()">
+      <input type="file" id="co-file" accept=".pdf,.jpg,.jpeg,.png" onchange="handleUpload(event)">
+      <div style="font-size:28px">📎</div>
+      <p>Click to upload signed asset request form (optional)</p>
+      <p style="font-size:11px;margin-top:4px">PDF, JPG, or PNG · Max 5MB</p>
+    </div>
+    <div id="upload-msg" style="display:none;margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeModal('checkout-modal')">Cancel</button>
+      <button class="btn success" onclick="confirmCheckout()">Confirm Checkout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="overlay" id="add-cat-modal" onclick="if(event.target===this)closeModal('add-cat-modal')">
+  <div class="modal" style="width:420px">
+    <h3 id="cat-modal-title">New Category</h3>
+    <div class="form-group"><label>Category Name *</label><input type="text" id="cat-name" placeholder="e.g. Microcontroller"></div>
+    <div class="form-group"><label>Color (hex)</label><input type="color" id="cat-color" value="#0099cc" style="height:40px;padding:4px 8px;cursor:pointer"></div>
+    <div class="form-group">
+      <label>Is Consumable?</label>
+      <div class="check-row" style="margin-top:4px">
+        <input type="checkbox" id="cat-is-consumable">
+        <label for="cat-is-consumable">Items in this category are consumables (no return tracking)</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeModal('add-cat-modal')">Cancel</button>
+      <button class="btn" onclick="saveCat()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="overlay" id="add-user-modal" onclick="if(event.target===this)closeModal('add-user-modal')">
+  <div class="modal" style="width:420px">
+    <h3 id="user-modal-title">New Admin Account</h3>
+    <div class="form-group"><label>Full Name *</label><input type="text" id="u-name" placeholder="e.g. Rahul Sharma"></div>
+    <div class="form-group"><label>Position / Role *</label><input type="text" id="u-position" placeholder="e.g. Lab Coordinator, Treasurer…"></div>
+    <div class="form-group"><label>Username *</label><input type="text" id="u-username" placeholder="e.g. rahul.sharma" autocomplete="off"></div>
+    <div class="form-group"><label>Password *</label><input type="password" id="u-pass" placeholder="Min 6 characters" autocomplete="new-password"></div>
+    <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);margin-top:4px">
+      ⚠️ Only super-admins can create or remove admin accounts. The new user will have full admin access.
+    </div>
+    <div class="modal-actions">
+      <button class="btn sec" onclick="closeModal('add-user-modal')">Cancel</button>
+      <button class="btn" onclick="saveUser()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  ⚙️  SUPABASE CONFIG
+// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://wdkmqqhvegjwscpqiemb.supabase.co';       // e.g. https://abcxyz.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indka21xcWh2ZWdqd3NjcHFpZW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMDExNDIsImV4cCI6MjA5Mzg3NzE0Mn0.tFYZLsAQ337h4TSgw7GwluNFzY1yFjdXnS20vD7Awaw'; // the long "anon public" key
+
+
+// ════════════════════════════════════════════════════════════
+//  SUPABASE HELPERS
+// ════════════════════════════════════════════════════════════
+async function sbGet(table, order='id') {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=${order}`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+  });
+  if (!res.ok) throw new Error(`GET ${table} failed: ${res.status}`);
+  return res.json();
+}
+async function sbInsert(table, row) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(row)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`INSERT ${table} failed: ${t}`); }
+}
+async function sbUpdate(table, id, data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`UPDATE ${table} failed: ${t}`); }
+}
+async function sbDelete(table, id) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+  });
+  if (!res.ok) throw new Error(`DELETE ${table} failed: ${res.status}`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+const SESSION_KEY = 'ieee_sps_session_v2';
+
+
+let assets = [], checkouts = [], history = [], adminLog = [];
+let admins = [], categories = [];
+let currentUser = null;
+let editingId = null, checkoutAssetId = null, uploadedFile = null;
+let editingCatId = null;
+let mcoCart = {};
+
+// ════════════════════════════════════════════════════════════
+//  VIEW-ONLY LANDING
+// ════════════════════════════════════════════════════════════
+async function enterViewOnly() {
+  currentUser = { id: 'viewer', name: 'Guest Viewer', position: 'Read-only', username: 'viewer', role: 'viewer', color: '#5a7aaa' };
+  await bootApp();
+}
+
+function openAdminLoginOverlay() {
+  document.getElementById('admin-login-overlay').classList.add('open');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').classList.remove('show');
+  setTimeout(() => document.getElementById('login-user').focus(), 100);
+}
+function closeAdminLoginOverlay() {
+  document.getElementById('admin-login-overlay').classList.remove('open');
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTH / LOGIN
+// ════════════════════════════════════════════════════════════
+const AVATAR_COLORS = ['#0099cc','#00b4d8','#0077b6','#006699','#c084fc','#f59e0b','#10b981','#fb923c'];
+
+function hashPass(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+  return h.toString(36);
+}
+function avatarColor(id) {
+  const idx = Math.abs(parseInt(id, 36)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx] || '#0099cc';
+}
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+async function doLogin() {
+  const uname = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const ph = hashPass(pass);
+  const admin = admins.find(a => a.username === uname && a.pass_hash === ph);
+  if (!admin) {
+    document.getElementById('login-error').classList.add('show');
+    return;
+  }
+  currentUser = { id: admin.id, name: admin.name, position: admin.position, username: admin.username, role: 'admin', color: avatarColor(admin.id), isSuperAdmin: !!admin.is_super_admin };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+  closeAdminLoginOverlay();
+
+  // If app is already running (viewer upgrading to admin), just re-apply UI
+  if (document.getElementById('app-shell').style.display !== 'none') {
+    applyRoleUI();
+    render();
+    showPage('assets');
+    toast('Signed in as admin: ' + admin.name, 'ok');
+  } else {
+    await bootApp();
+  }
+}
+
+async function doLogout() {
+  currentUser = null;
+  localStorage.removeItem(SESSION_KEY);
+  await enterViewOnly();
+}
+
+async function bootApp() {
+  document.getElementById('view-landing').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  applyRoleUI();
+  showLoadingOverlay(true);
+  await loadData();
+  showLoadingOverlay(false);
+  render();
+  showPage('assets');
+  // Check & send due-date reminder emails (once per day)
+}
+
+function showLoadingOverlay(show) {
+  let el = document.getElementById('loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(4,9,26,0.9);z-index:999;display:flex;align-items:center;justify-content:center;font-family:var(--mono);color:var(--muted);font-size:13px;';
+    el.innerHTML = '<span style="color:var(--accent-bright)">⏳</span> &nbsp;Loading data…';
+    document.body.appendChild(el);
+  }
+  el.style.display = show ? 'flex' : 'none';
+}
+
+function applyRoleUI() {
+  const isAdmin = currentUser?.role === 'admin';
+  const hr = document.getElementById('header-right');
+  if (isAdmin) {
+    hr.innerHTML = `
+      <div class="user-chip">
+        <div class="user-avatar" style="background:${currentUser.color}33;color:${currentUser.color}">${initials(currentUser.name)}</div>
+        <div class="user-info">
+          <span class="user-name">${esc(currentUser.name)}</span>
+          <span class="user-role role-admin">${esc(currentUser.position)}</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>`;
+  } else {
+    hr.innerHTML = `
+      <button class="admin-login-header-btn" onclick="openAdminLoginOverlay()">🔐 Admin Login</button>`;
+  }
+  document.getElementById('viewer-banner').style.display = 'none';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  if (!isAdmin) {
+    const th = document.getElementById('th-actions'); if (th) th.style.display = 'none';
+    const thco = document.getElementById('th-co-action'); if (thco) thco.style.display = 'none';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════════
+async function loadData() {
+  try {
+    const [a, co, h, adm, al, cats] = await Promise.all([
+      sbGet('assets'), sbGet('checkouts'), sbGet('history'), sbGet('admins'), sbGet('admin_log'), sbGet('categories','name')
+    ]);
+    assets    = (a  || []).map(row => ({ ...row, addedBy: { id: row.added_by_id, name: row.added_by_name, position: row.added_by_position }, addedAt: row.added_at, lowAlert: row.low_alert }));
+    checkouts = (co || []).map(row => ({ ...row, assetId: row.asset_id, memberName: row.member_name, returnDate: row.return_date, hasForm: row.has_form, formName: row.form_name, checkedOutBy: { id: row.checked_out_by_id, name: row.checked_out_by_name, position: row.checked_out_by_position } }));
+    history   = (h  || []).map(row => ({ assetName: row.asset_name, action: row.action, memberName: row.member_name, usn: row.usn, ieeeNo: row.ieee_no, authority: row.authority, adminName: row.admin_name, date: row.date }));
+    admins    = adm || [];
+    adminLog  = (al || []).map(row => ({ adminName: row.admin_name, position: row.position, action: row.action, date: row.date }));
+    categories = cats || [];
+
+    if (!admins.length) await seedAdmins();
+    // No asset seed — admins add assets themselves
+    populateCategoryDropdowns();
+  } catch(e) {
+    toast('⚠️ Could not connect to Supabase. Check your URL and key.', 'err');
+    console.error(e);
+  }
+}
+
+async function saveAssetToDB(assetObj) {
+  const row = {
+    id: assetObj.id, name: assetObj.name, category: assetObj.category,
+    qty: assetObj.qty, unit: assetObj.unit, location: assetObj.location,
+    low_alert: assetObj.lowAlert || 0, notes: assetObj.notes,
+    added_by_id: assetObj.addedBy?.id, added_by_name: assetObj.addedBy?.name,
+    added_by_position: assetObj.addedBy?.position, added_at: assetObj.addedAt
+  };
+  await sbInsert('assets', row);
+}
+async function updateAssetInDB(assetObj) {
+  const row = { name: assetObj.name, category: assetObj.category, qty: assetObj.qty, unit: assetObj.unit, location: assetObj.location, low_alert: assetObj.lowAlert || 0, notes: assetObj.notes };
+  await sbUpdate('assets', assetObj.id, row);
+}
+async function saveCheckoutToDB(co) {
+  const row = {
+    id: co.id, asset_id: co.assetId, member_name: co.memberName,
+    usn: co.usn, ieee_no: co.ieeeNo, contact: co.contact,
+    authority: co.authority, desig: co.desig, purpose: co.purpose,
+    qty: co.qty, date: co.date, return_date: co.returnDate,
+    has_form: co.hasForm, form_name: co.formName,
+    checked_out_by_id: co.checkedOutBy?.id, checked_out_by_name: co.checkedOutBy?.name,
+    checked_out_by_position: co.checkedOutBy?.position
+  };
+  await sbInsert('checkouts', row);
+}
+async function saveHistoryToDB(h) {
+  const row = { asset_name: h.assetName, action: h.action, member_name: h.memberName, usn: h.usn, ieee_no: h.ieeeNo, authority: h.authority, admin_name: h.adminName, date: h.date };
+  await sbInsert('history', row);
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function now() { return new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ════════════════════════════════════════════════════════════
+//  ADMIN SEED (no asset seed)
+// ════════════════════════════════════════════════════════════
+async function seedAdmins() {
+  const superAdmin = { id: uid(), name: 'Super Admin', position: 'Lab Coordinator', username: 'admin', pass_hash: hashPass('admin123'), is_super_admin: true, created_at: now() };
+  await sbInsert('admins', superAdmin);
+  admins = [superAdmin];
+}
+
+// ════════════════════════════════════════════════════════════
+//  CATEGORY HELPERS
+// ════════════════════════════════════════════════════════════
+function getCatColor(catName) {
+  const cat = categories.find(c => c.name === catName);
+  return cat ? (cat.color || '#0099cc') : '#0099cc';
+}
+function isCatConsumable(catName) {
+  const cat = categories.find(c => c.name === catName);
+  return cat ? !!cat.is_consumable : false;
+}
+
+function populateCategoryDropdowns() {
+  const catNames = categories.map(c => c.name);
+  const selectors = ['filter-cat', 'f-cat', 'co-filter-cat', 'mco-cat', 'consol-cat'];
+  selectors.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Preserve first option
+    const first = el.options[0];
+    el.innerHTML = '';
+    if (first) el.appendChild(first);
+    catNames.forEach(name => {
+      const o = document.createElement('option');
+      o.value = name; o.textContent = name;
+      el.appendChild(o);
+    });
+  });
+}
+
+function catBadgeStyle(catName) {
+  const color = getCatColor(catName);
+  const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
+  return `background:rgba(${r},${g},${b},0.18);color:${color}`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+function showPage(page) {
+  const adminPages = ['users','multico','consol','cats'];
+  if (adminPages.includes(page) && currentUser?.role !== 'admin') { toast('Admin access required', 'err'); return; }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const pages = ['assets','checkout','multico','consol','history','cats','users'];
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', pages[i] === page));
+  if (page === 'users') renderUserList();
+  if (page === 'multico') renderMcoList();
+  if (page === 'consol') renderConsol();
+  if (page === 'cats') renderCatList();
+  const bar = document.getElementById('bulk-return-bar');
+  if (bar) bar.style.display = (page === 'checkout' && currentUser?.role === 'admin') ? 'flex' : 'none';
+}
+
+// ════════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════════
+function getAvail(a) {
+  if (isCatConsumable(a.category)) return a.qty; // consumables show their qty
+  return a.qty - checkouts.filter(c => c.assetId === a.id).reduce((s, c) => s + c.qty, 0);
+}
+function getStatus(a) {
+  const av = getAvail(a);
+  if (isCatConsumable(a.category)) return av <= a.lowAlert ? 'Low Stock' : 'Available';
+  if (av <= 0) return 'Checked Out';
+  if (av <= a.lowAlert) return 'Low Stock';
+  return 'Available';
+}
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════════
+function render() { renderStats(); renderTable(); renderCheckouts(); renderHistory(); }
+
+function renderStats() {
+  const total = assets.length;
+  const avail = assets.filter(a => getStatus(a) === 'Available').length;
+  const coCount = checkouts.length;
+  const low = assets.filter(a => getStatus(a) === 'Low Stock').length;
+  const withForm = checkouts.filter(c => c.hasForm).length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Assets</div><div class="stat-value c-blue">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value c-green">${avail}</div></div>
+    <div class="stat-card"><div class="stat-label">Checked Out</div><div class="stat-value c-warn">${coCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Low Stock</div><div class="stat-value c-red">${low}</div></div>
+    <div class="stat-card"><div class="stat-label">Forms Filed</div><div class="stat-value c-purple">${withForm}</div></div>
+  `;
+}
+
+function renderTable() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const sf = document.getElementById('filter-status').value;
+  const isAdmin = currentUser?.role === 'admin';
+
+  const filtered = assets.filter(a =>
+    (!search || a.name.toLowerCase().includes(search) || (a.location||'').toLowerCase().includes(search)) &&
+    (!cat || a.category === cat) && (!sf || getStatus(a) === sf)
+  ).sort((a, b) => {
+    const catCmp = (a.category||'').localeCompare(b.category||'');
+    return catCmp !== 0 ? catCmp : (a.name||'').localeCompare(b.name||'');
+  });
+
+  const tbody = document.getElementById('asset-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}"><div class="empty"><div class="ico">📦</div><p>No assets match your filters</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(a => {
+    const s = getStatus(a), av = getAvail(a);
+    const dot = s==='Available'?'dot-ok':s==='Low Stock'?'dot-low':'dot-out';
+    const isConsumable = isCatConsumable(a.category);
+    const canCo = av > 0; // ALL categories can be checked out now
+    const ab = a.addedBy;
+    const abColor = ab ? avatarColor(ab.id) : '#5a7aaa';
+    const addedByHtml = ab
+      ? `<div class="added-by-chip" title="Added on ${esc(a.addedAt||'')}">
+           <span class="ab-dot" style="background:${abColor}"></span>
+           <span style="color:${abColor}">${esc(ab.name)}</span>
+         </div>
+         <div style="font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)">${esc(ab.position)}</div>`
+      : `<span style="color:var(--muted);font-size:11px;font-family:var(--mono)">—</span>`;
+
+    const actionsHtml = isAdmin ? `<td><div class="action-row">
+        ${canCo ? `<button class="btn sm success" onclick="openCheckout('${a.id}')">Check Out</button>` : ''}
+        ${isConsumable && isAdmin ? `<div class="qty-controls" style="display:inline-flex">
+          <button class="qty-btn" onclick="adjQty('${a.id}',-1)" title="Consume 1">−</button>
+          <button class="qty-btn" onclick="adjQty('${a.id}',1)" title="Restock 1">+</button>
+        </div>` : ''}
+        <button class="btn sm sec" onclick="openEdit('${a.id}')">Edit</button>
+        <button class="btn sm danger" onclick="delAsset('${a.id}')">Del</button>
+      </div></td>` : '';
+
+    return `<tr>
+      <td data-label="Asset"><strong style="font-weight:500">${esc(a.name)}</strong>${a.notes?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(a.notes.substring(0,40))}${a.notes.length>40?'…':''}</div>`:''}</td>
+      <td data-label="Category"><span class="badge" style="${catBadgeStyle(a.category)}">${esc(a.category)}</span>${isConsumable?'<span style="font-size:9px;color:var(--warn);font-family:var(--mono);margin-left:4px">consumable</span>':''}</td>
+      <td data-label="Qty">${isConsumable
+        ? `<span>${av} ${esc(a.unit)}</span>`
+        : `${av} / ${a.qty} ${esc(a.unit)}`}
+      </td>
+      <td data-label="Status"><span class="status-dot ${dot}"></span>${s}</td>
+      <td data-label="Location" style="color:var(--muted);font-size:12px">${esc(a.location||'—')}</td>
+      <td data-label="Added By">${addedByHtml}</td>
+      ${isAdmin ? actionsHtml : ''}
+    </tr>`;
+  }).join('');
+}
+
+function renderCheckouts() {
+  const tbody = document.getElementById('co-tbody');
+  const todayStr = today();
+  const isAdmin = currentUser?.role === 'admin';
+
+  // Stats
+  const coStatsEl = document.getElementById('co-stats');
+  const overdueCount = checkouts.filter(c => c.returnDate && c.returnDate < todayStr).length;
+  coStatsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Currently Out</div><div class="stat-value c-warn">${checkouts.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value c-red">${overdueCount}</div></div>
+    <div class="stat-card"><div class="stat-label">With Form</div><div class="stat-value c-purple">${checkouts.filter(c=>c.hasForm).length}</div></div>
+  `;
+
+  const cbTh = document.getElementById('th-co-cb');
+  if (cbTh) cbTh.style.display = isAdmin ? '' : 'none';
+  const actTh = document.getElementById('th-co-action');
+  if (actTh) actTh.style.display = isAdmin ? '' : 'none';
+
+  // Filters
+  const search = (document.getElementById('co-search')?.value || '').toLowerCase();
+  const catF = document.getElementById('co-filter-cat')?.value || '';
+  const formF = document.getElementById('co-filter-form')?.value || '';
+  const overdueF = document.getElementById('co-filter-overdue')?.value || '';
+
+  let filtered = checkouts.filter(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    const nameMatch = !search || (c.memberName||'').toLowerCase().includes(search) || (c.usn||'').toLowerCase().includes(search) || (a && a.name.toLowerCase().includes(search));
+    const catMatch = !catF || (a && a.category === catF);
+    const formMatch = !formF || (formF === 'yes' ? c.hasForm : !c.hasForm);
+    const overdueMatch = !overdueF || (c.returnDate && c.returnDate < todayStr);
+    return nameMatch && catMatch && formMatch && overdueMatch;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="${isAdmin?12:10}"><div class="empty"><div class="ico">✅</div><p>No checkouts match your filters</p></div></td></tr>`;
+    updateBulkCount(); return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    const overdue = c.returnDate && c.returnDate < todayStr;
+    const formEl = c.hasForm
+      ? `<span class="form-chip">✅ submitted</span>`
+      : `<span class="no-form-chip">✗ missing</span>`;
+    return `<tr class="${overdue?'overdue':''}">
+      ${isAdmin ? `<td class="td-check"><input type="checkbox" class="bulk-cb co-cb" data-id="${c.id}" onchange="updateBulkCount()"></td>` : ''}
+      <td data-label="Asset"><strong style="font-weight:500">${a ? esc(a.name) : 'Unknown'}</strong></td>
+      <td data-label="Category">${a ? `<span class="badge" style="${catBadgeStyle(a.category)}">${esc(a.category)}</span>` : '—'}</td>
+      <td data-label="Member">${esc(c.memberName)}</td>
+      <td data-label="USN"><span class="tag">${esc(c.usn)}</span></td>
+      <td data-label="IEEE No"><span class="tag">${esc(c.ieeeNo)}</span></td>
+      <td data-label="Authority"><span class="auth-chip">${esc(c.authority)}</span></td>
+      <td data-label="Date" style="font-size:12px">${esc(c.date)}</td>
+      <td data-label="Return" style="font-size:12px${overdue?';color:var(--danger);font-weight:600':''}">${c.returnDate||'—'}${overdue?' ⚠️':''}</td>
+      <td data-label="Qty">${c.qty} ${a?esc(a.unit):''}</td>
+      <td data-label="Form">${formEl}</td>
+      ${isAdmin ? `<td class="td-actions"><button class="btn sm warn-btn" onclick="checkin('${c.id}')">Return</button></td>` : ''}
+    </tr>`;
+  }).join('');
+  updateBulkCount();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!history.length) { list.innerHTML = `<div class="empty"><p>No activity recorded yet</p></div>`; return; }
+  list.innerHTML = [...history].reverse().slice(0, 100).map(h => `
+    <div class="history-item">
+      <div>
+        <span style="font-weight:500">${esc(h.assetName)}</span>
+        <span style="color:var(--muted);margin-left:8px">${esc(h.action)}</span>
+        ${h.memberName?`<span style="color:var(--accent-bright);margin-left:8px">${esc(h.memberName)}</span>`:''}
+        ${h.usn?`<span style="color:var(--muted);margin-left:6px">(${esc(h.usn)})</span>`:''}
+        ${h.ieeeNo?`<span style="color:var(--muted);margin-left:6px">· IEEE ${esc(h.ieeeNo)}</span>`:''}
+        ${h.authority?`<span style="color:var(--accent2);margin-left:6px">auth: ${esc(h.authority)}</span>`:''}
+        ${h.adminName?`<span style="color:var(--accent2);margin-left:8px;font-size:11px;font-family:var(--mono)">by ${esc(h.adminName)}</span>`:''}
+      </div>
+      <div style="color:var(--muted);font-size:11px;font-family:var(--mono);white-space:nowrap;margin-left:12px">${esc(h.date)}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  CONSOLIDATED CHECKOUT (admin)
+// ════════════════════════════════════════════════════════════
+function renderConsol() {
+  const search = (document.getElementById('consol-search')?.value || '').toLowerCase();
+  const catF = document.getElementById('consol-cat')?.value || '';
+  const formF = document.getElementById('consol-form')?.value || '';
+  const overdueF = document.getElementById('consol-overdue')?.value || '';
+  const todayStr = today();
+
+  let filtered = checkouts.filter(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    const nameMatch = !search || (c.memberName||'').toLowerCase().includes(search) || (c.usn||'').toLowerCase().includes(search) || (a && a.name.toLowerCase().includes(search));
+    const catMatch = !catF || (a && a.category === catF);
+    const formMatch = !formF || (formF==='yes' ? c.hasForm : !c.hasForm);
+    const overdueMatch = !overdueF || (c.returnDate && c.returnDate < todayStr);
+    return nameMatch && catMatch && formMatch && overdueMatch;
+  });
+
+  // Summary by category
+  const byCat = {};
+  filtered.forEach(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    const cat = a ? a.category : 'Unknown';
+    if (!byCat[cat]) byCat[cat] = [];
+    byCat[cat].push(c);
+  });
+  const summEl = document.getElementById('consol-summary-row');
+  const catKeys = Object.keys(byCat);
+  summEl.innerHTML = catKeys.length ? catKeys.map(cat => {
+    const items = byCat[cat];
+    return `<div class="consol-group">
+      <div class="consol-group-title">${esc(cat)} (${items.length})</div>
+      ${items.slice(0,4).map(c => {
+        const a = assets.find(x => x.id === c.assetId);
+        return `<div class="consol-group-item"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a?esc(a.name):'Unknown'}</span><span style="color:var(--accent-bright);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-left:8px">${c.qty}</span></div>`;
+      }).join('')}
+      ${items.length > 4 ? `<div style="font-size:10px;color:var(--muted);padding-top:4px;font-family:var(--mono)">+${items.length-4} more</div>` : ''}
+    </div>`;
+  }).join('') : '';
+
+  const tbody = document.getElementById('consol-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="ico">📋</div><p>No records match filters</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    const overdue = c.returnDate && c.returnDate < todayStr;
+    const formEl = c.hasForm ? `<span class="form-chip">✅</span>` : `<span class="no-form-chip">✗</span>`;
+    return `<tr class="${overdue?'overdue':''}">
+      <td style="font-weight:500">${esc(c.memberName)}</td>
+      <td><span class="tag">${esc(c.usn)}</span></td>
+      <td><span class="tag">${esc(c.ieeeNo)}</span></td>
+      <td>${a?esc(a.name):'Unknown'}</td>
+      <td>${a?`<span class="badge" style="${catBadgeStyle(a.category)}">${esc(a.category)}</span>`:'—'}</td>
+      <td style="font-family:var(--mono)">${c.qty} ${a?esc(a.unit):''}</td>
+      <td style="font-size:11px;color:var(--muted)">${esc(c.date)}</td>
+      <td style="font-size:11px${overdue?';color:var(--danger);font-weight:600':''}">${c.returnDate||'—'}${overdue?' ⚠️':''}</td>
+      <td>${formEl}</td>
+      <td><span class="auth-chip">${esc(c.authority)}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${esc(c.checkedOutBy?.name||'—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportConsolCSV() {
+  const todayStr = today();
+  const rows = [['Member','USN','IEEE No','Asset','Category','Qty','Unit','Date Out','Return By','Form Submitted','Authority','Checked Out By']];
+  checkouts.forEach(c => {
+    const a = assets.find(x => x.id === c.assetId);
+    rows.push([c.memberName, c.usn, c.ieeeNo, a?a.name:'Unknown', a?a.category:'', c.qty, a?a.unit:'', c.date, c.returnDate||'', c.hasForm?'Yes':'No', c.authority, c.checkedOutBy?.name||'']);
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a2 = document.createElement('a'); a2.href=url; a2.download='sps-checkouts.csv'; a2.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════════════════
+//  ASSET ACTIONS
+// ════════════════════════════════════════════════════════════
+function requireAdmin() {
+  if (!currentUser || currentUser.role !== 'admin') { toast('Admin access required', 'err'); return false; }
+  return true;
+}
+
+function openAddModal() {
+  if (!requireAdmin()) return;
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add New Asset';
+  ['f-name','f-unit','f-loc','f-notes'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-qty').value=1; document.getElementById('f-low').value=2;
+  if (categories.length) document.getElementById('f-cat').value=categories[0].name;
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function openEdit(id) {
+  if (!requireAdmin()) return;
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Asset';
+  document.getElementById('f-name').value=a.name;
+  document.getElementById('f-cat').value=a.category;
+  document.getElementById('f-qty').value=a.qty;
+  document.getElementById('f-unit').value=a.unit;
+  document.getElementById('f-loc').value=a.location||'';
+  document.getElementById('f-low').value=a.lowAlert;
+  document.getElementById('f-notes').value=a.notes||'';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+async function saveAsset() {
+  if (!requireAdmin()) return;
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('Asset name is required','err'); return; }
+  const data = {
+    name, category: document.getElementById('f-cat').value,
+    qty: parseInt(document.getElementById('f-qty').value)||1,
+    unit: document.getElementById('f-unit').value.trim()||'pcs',
+    location: document.getElementById('f-loc').value.trim(),
+    lowAlert: parseInt(document.getElementById('f-low').value)||0,
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  try {
+    if (editingId) {
+      const idx = assets.findIndex(a=>a.id===editingId);
+      assets[idx] = {...assets[idx],...data};
+      await updateAssetInDB(assets[idx]);
+      await addLog(data.name,'updated');
+      await addAdminLog('Edited asset: ' + data.name);
+      toast('Asset updated','ok');
+    } else {
+      const newAsset = { id: uid(), ...data, addedBy: { id: currentUser.id, name: currentUser.name, position: currentUser.position }, addedAt: now() };
+      await saveAssetToDB(newAsset);
+      assets.push(newAsset);
+      await addLog(data.name,'added to inventory');
+      await addAdminLog('Added new asset: ' + data.name);
+      toast('Asset added','ok');
+    }
+    closeModal('add-modal'); render();
+  } catch(e) { toast('Error saving asset: ' + e.message, 'err'); }
+}
+
+async function delAsset(id) {
+  if (!requireAdmin()) return;
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  if (!confirm(`Delete "${a.name}"? This cannot be undone.`)) return;
+  try {
+    await sbDelete('assets', id);
+    assets=assets.filter(x=>x.id!==id); checkouts=checkouts.filter(c=>c.assetId!==id);
+    await addLog(a.name,'removed from inventory');
+    await addAdminLog('Deleted asset: ' + a.name);
+    render(); toast('Asset deleted');
+  } catch(e) { toast('Error deleting asset: ' + e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  CHECKOUT (single asset) — works for ALL categories incl. consumables
+// ════════════════════════════════════════════════════════════
+function openCheckout(id) {
+  if (!requireAdmin()) return;
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  checkoutAssetId=id; uploadedFile=null;
+  const isConsumable = isCatConsumable(a.category);
+  document.getElementById('co-asset-name').value=a.name;
+  document.getElementById('co-consumable-note').style.display = isConsumable ? 'flex' : 'none';
+  document.getElementById('co-return-group').style.display = isConsumable ? 'none' : 'block';
+  ['co-name','co-usn','co-ieee','co-contact','co-authority','co-desig','co-purpose'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('co-qty').value=1;
+  document.getElementById('co-qty').max=getAvail(a);
+  document.getElementById('co-return').value='';
+  document.getElementById('co-hasform').checked=false;
+  document.getElementById('upload-msg').style.display='none';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('co-file').value='';
+  document.getElementById('checkout-modal').classList.add('open');
+}
+
+function handleUpload(e) {
+  const file = e.target.files[0]; if(!file) return;
+  if (file.size > 5*1024*1024) { toast('File too large (max 5MB)','err'); return; }
+  uploadedFile = {name:file.name, size:Math.round(file.size/1024)+'KB', type:file.type};
+  document.getElementById('upload-zone').style.display='none';
+  document.getElementById('upload-msg').style.display='block';
+  document.getElementById('upload-msg').innerHTML=`<div class="upload-success">✅ &nbsp;<strong>${esc(file.name)}</strong> &nbsp;·&nbsp; ${uploadedFile.size} — Form attached</div>`;
+  document.getElementById('co-hasform').checked = true;
+}
+
+async function confirmCheckout() {
+  if (!requireAdmin()) return;
+  const name=document.getElementById('co-name').value.trim();
+  const usn=document.getElementById('co-usn').value.trim();
+  const ieeeNo=document.getElementById('co-ieee').value.trim();
+  const authority=document.getElementById('co-authority').value.trim();
+  if (!name||!usn||!ieeeNo||!authority) { toast('Name, USN, IEEE No. and Signing Authority are required','err'); return; }
+  const qty=parseInt(document.getElementById('co-qty').value)||1;
+  const hasForm=document.getElementById('co-hasform').checked;
+  const a=assets.find(x=>x.id===checkoutAssetId);
+  if (qty>getAvail(a)) { toast('Not enough units available','err'); return; }
+  const isConsumable = isCatConsumable(a.category);
+
+  if (isConsumable) {
+    // For consumables: just decrement qty, log it, no checkout record
+    a.qty = Math.max(0, a.qty - qty);
+    try {
+      await sbUpdate('assets', a.id, { qty: a.qty });
+      await addLog(a.name, `consumed (${qty} ${a.unit}) by ${name} (${usn})`, name, usn, ieeeNo, authority);
+      await addAdminLog(`Consumable: ${qty}x ${a.name} to ${name} (${usn})`);
+      closeModal('checkout-modal'); render();
+      toast(`${qty} ${a.unit} of ${a.name} issued to ${name}`, 'ok');
+    } catch(e) { toast('Error: ' + e.message, 'err'); }
+    return;
+  }
+
+  const co = {
+    id:uid(), assetId:checkoutAssetId, memberName:name, usn, ieeeNo,
+    contact:document.getElementById('co-contact').value.trim(),
+    authority, desig:document.getElementById('co-desig').value.trim(),
+    purpose:document.getElementById('co-purpose').value.trim(),
+    qty, date:now(), returnDate:document.getElementById('co-return').value,
+    hasForm: hasForm || !!uploadedFile, formName:uploadedFile?uploadedFile.name:null,
+    checkedOutBy: { id: currentUser.id, name: currentUser.name, position: currentUser.position }
+  };
+  try {
+    await saveCheckoutToDB(co);
+    checkouts.push(co);
+    await addLog(a.name,`checked out (${qty} ${a.unit})`,name,usn,ieeeNo,authority);
+    await addAdminLog(`Checked out ${qty}x ${a.name} to ${name} (${usn})`);
+    closeModal('checkout-modal'); render();
+    showPage('checkout');
+    toast(`${a.name} checked out to ${name}`,'ok');
+  } catch(e) { toast('Error saving checkout: ' + e.message, 'err'); }
+}
+
+async function checkin(coId) {
+  if (!requireAdmin()) return;
+  const co=checkouts.find(c=>c.id===coId); if(!co) return;
+  const a=assets.find(x=>x.id===co.assetId);
+  try {
+    await sbDelete('checkouts', coId);
+    checkouts=checkouts.filter(c=>c.id!==coId);
+    await addLog(a?a.name:'Unknown',`returned (${co.qty} ${a?a.unit:''})`,co.memberName,co.usn,co.ieeeNo,co.authority);
+    await addAdminLog(`Checked in ${co.qty}x ${a?a.name:'asset'} from ${co.memberName}`);
+    render(); toast(`${a?a.name:'Asset'} returned`,'ok');
+  } catch(e) { toast('Error checking in: ' + e.message, 'err'); }
+}
+
+async function adjQty(id, delta) {
+  if (!requireAdmin()) return;
+  const a=assets.find(x=>x.id===id); if(!a) return;
+  a.qty=Math.max(0,a.qty+delta);
+  try {
+    await sbUpdate('assets', id, { qty: a.qty });
+    await addLog(a.name, delta>0?`restocked +${delta} ${a.unit}`:`consumed ${Math.abs(delta)} ${a.unit}`);
+    await addAdminLog(`${delta>0?'Restocked':'Consumed'} ${Math.abs(delta)}x ${a.name}`);
+    render();
+  } catch(e) { toast('Error updating qty: ' + e.message, 'err'); }
+}
+
+async function addLog(assetName, action, memberName, usn, ieeeNo, authority) {
+  const entry = { assetName, action, memberName, usn, ieeeNo, authority, adminName: currentUser?.name || null, date: now() };
+  history.push(entry);
+  if (history.length > 300) history = history.slice(-300);
+  try { await saveHistoryToDB(entry); } catch(e) { console.warn('history insert failed', e); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  BULK RETURN
+// ════════════════════════════════════════════════════════════
+function updateBulkCount() {
+  const cbs = document.querySelectorAll('.co-cb:checked');
+  const countEl = document.getElementById('bulk-count');
+  if (countEl) countEl.textContent = `${cbs.length} selected`;
+  const all = document.getElementById('cb-select-all');
+  const total = document.querySelectorAll('.co-cb').length;
+  if (all) all.checked = total > 0 && cbs.length === total;
+}
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.co-cb').forEach(cb => cb.checked = checked);
+  updateBulkCount();
+}
+async function bulkReturn() {
+  if (!requireAdmin()) return;
+  const selected = [...document.querySelectorAll('.co-cb:checked')].map(cb => cb.dataset.id);
+  if (!selected.length) { toast('Select at least one item to return', 'err'); return; }
+  if (!confirm(`Return ${selected.length} checked-out item(s)?`)) return;
+  let done = 0;
+  for (const coId of selected) {
+    const co = checkouts.find(c => c.id === coId); if(!co) continue;
+    const a = assets.find(x => x.id === co.assetId);
+    try {
+      await sbDelete('checkouts', coId);
+      checkouts = checkouts.filter(c => c.id !== coId);
+      await addLog(a?a.name:'Unknown',`returned (${co.qty} ${a?a.unit:''})`,co.memberName,co.usn,co.ieeeNo,co.authority);
+      await addAdminLog(`Checked in ${co.qty}x ${a?a.name:'asset'} from ${co.memberName}`);
+      done++;
+    } catch(e) { console.error('bulk return error', coId, e); }
+  }
+  render(); toast(`${done} item(s) returned successfully`, 'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+//  MULTI-CHECKOUT
+// ════════════════════════════════════════════════════════════
+function renderMcoList() {
+  const search = (document.getElementById('mco-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('mco-cat')?.value || '';
+
+  const filtered = assets.filter(a =>
+    (!search || a.name.toLowerCase().includes(search) || (a.location||'').toLowerCase().includes(search)) &&
+    (!cat || a.category === cat)
+  );
+
+  const container = document.getElementById('mco-asset-tbody');
+  if (!container) return;
+  if (!filtered.length) { container.innerHTML = '<div class="empty" style="padding:32px"><p>No assets found</p></div>'; return; }
+
+  container.innerHTML = filtered.map(a => {
+    const avail = getAvail(a);
+    const isUnavail = avail <= 0;
+    const isSelected = !!mcoCart[a.id];
+    const qty = mcoCart[a.id] || 1;
+    const isConsumable = isCatConsumable(a.category);
+    return `<div class="mco-asset-row ${isSelected?'selected':''} ${isUnavail?'unavailable':''}" id="mco-row-${a.id}">
+      <input type="checkbox" class="mco-cb" ${isSelected?'checked':''} ${isUnavail?'disabled':''}
+        onchange="mcoToggle('${a.id}', this.checked)" title="${isUnavail?'Not available':'Add to cart'}">
+      <div class="mco-asset-info">
+        <div class="mco-asset-name">${esc(a.name)} ${isConsumable?'<span style="font-size:9px;color:var(--warn);font-family:var(--mono)">[consumable]</span>':''}</div>
+        <div class="mco-asset-meta"><span class="badge" style="${catBadgeStyle(a.category)};font-size:9px">${esc(a.category)}</span> &nbsp;${avail}${!isConsumable?'/'+a.qty:''} avail · ${esc(a.location||'—')}</div>
+      </div>
+      <input type="number" class="mco-qty-input" value="${qty}" min="1" max="${avail}"
+        ${isSelected?'':'disabled'} id="mco-qty-${a.id}"
+        onchange="mcoSetQty('${a.id}', this.value)" oninput="mcoSetQty('${a.id}', this.value)">
+    </div>`;
+  }).join('');
+  renderMcoCart();
+}
+
+function mcoToggle(assetId, checked) {
+  const a = assets.find(x => x.id === assetId); if(!a) return;
+  if (checked) { mcoCart[assetId] = 1; } else { delete mcoCart[assetId]; }
+  const row = document.getElementById('mco-row-' + assetId);
+  if (row) {
+    row.classList.toggle('selected', checked);
+    const qtyInput = document.getElementById('mco-qty-' + assetId);
+    if (qtyInput) qtyInput.disabled = !checked;
+  }
+  renderMcoCart();
+}
+function mcoSetQty(assetId, val) {
+  const a = assets.find(x => x.id === assetId); if(!a || !mcoCart[assetId]) return;
+  const avail = getAvail(a);
+  let qty = Math.max(1, Math.min(avail, parseInt(val) || 1));
+  mcoCart[assetId] = qty;
+  const input = document.getElementById('mco-qty-' + assetId);
+  if (input) input.value = qty;
+  renderMcoCart();
+}
+function renderMcoCart() {
+  const el = document.getElementById('mco-cart'); if(!el) return;
+  const ids = Object.keys(mcoCart);
+  if (!ids.length) { el.innerHTML = '<div class="mco-cart-empty">No items selected</div>'; return; }
+  el.innerHTML = ids.map(id => {
+    const a = assets.find(x => x.id === id); if(!a) return '';
+    return `<div class="mco-cart-item">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
+      <span style="color:var(--accent-bright);font-family:var(--mono);font-size:11px;margin-left:8px;flex-shrink:0">${mcoCart[id]} ${esc(a.unit)}</span>
+      <button onclick="mcoToggle('${id}',false);renderMcoList()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:6px;flex-shrink:0" title="Remove">×</button>
+    </div>`;
+  }).join('');
+}
+function clearMcoCart() {
+  mcoCart = {};
+  ['mco-name','mco-usn','mco-ieee','mco-contact','mco-authority','mco-desig','mco-purpose','mco-return'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value='';
+  });
+  document.getElementById('mco-hasform').checked = false;
+  renderMcoList();
+}
+
+async function confirmMultiCheckout() {
+  if (!requireAdmin()) return;
+  const ids = Object.keys(mcoCart);
+  if (!ids.length) { toast('Add at least one item to the cart', 'err'); return; }
+  const name     = document.getElementById('mco-name').value.trim();
+  const usn      = document.getElementById('mco-usn').value.trim();
+  const ieeeNo   = document.getElementById('mco-ieee').value.trim();
+  const authority= document.getElementById('mco-authority').value.trim();
+  if (!name||!usn||!ieeeNo||!authority) { toast('Name, USN, IEEE No. and Signing Authority are required', 'err'); return; }
+  const contact  = document.getElementById('mco-contact').value.trim();
+  const desig    = document.getElementById('mco-desig').value.trim();
+  const purpose  = document.getElementById('mco-purpose').value.trim();
+  const returnDate = document.getElementById('mco-return').value;
+  const hasForm  = document.getElementById('mco-hasform').checked;
+
+  for (const id of ids) {
+    const a = assets.find(x => x.id === id); if(!a) continue;
+    if (mcoCart[id] > getAvail(a)) { toast(`Not enough units for "${a.name}"`, 'err'); return; }
+  }
+
+  let done = 0;
+  for (const id of ids) {
+    const a = assets.find(x => x.id === id); if(!a) continue;
+    const qty = mcoCart[id];
+    const isConsumable = isCatConsumable(a.category);
+
+    if (isConsumable) {
+      a.qty = Math.max(0, a.qty - qty);
+      try {
+        await sbUpdate('assets', a.id, { qty: a.qty });
+        await addLog(a.name, `consumed (${qty} ${a.unit}) by ${name} (${usn})`, name, usn, ieeeNo, authority);
+        done++;
+      } catch(e) { toast(`Error with "${a.name}": ${e.message}`, 'err'); }
+    } else {
+      const co = { id:uid(), assetId:id, memberName:name, usn, ieeeNo, contact, authority, desig, purpose, qty, date:now(), returnDate, hasForm, formName:null, checkedOutBy:{id:currentUser.id,name:currentUser.name,position:currentUser.position} };
+      try {
+        await saveCheckoutToDB(co);
+        checkouts.push(co);
+        await addLog(a.name,`checked out (${qty} ${a.unit})`,name,usn,ieeeNo,authority);
+        done++;
+      } catch(e) { toast(`Error checking out "${a.name}": ${e.message}`, 'err'); }
+    }
+  }
+
+  // Send one consolidated email for all non-consumable checkouts
+  const coObjs = ids.map(id => checkouts.find(c => c.assetId === id && c.memberName === name)).filter(Boolean);
+  const aObjs  = coObjs.map(c => assets.find(a => a.id === c.assetId)).filter(Boolean);
+  await addAdminLog(`Multi-checkout: ${done} item(s) to ${name} (${usn})`);
+  render(); clearMcoCart(); showPage('checkout');
+  toast(`${done} item(s) checked out to ${name}`, 'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+//  CATEGORY MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function renderCatList() {
+  const el = document.getElementById('cat-list');
+  if (!categories.length) {
+    el.innerHTML = '<div class="empty"><div class="ico">🏷</div><p>No categories yet. Add one to get started.</p></div>';
+    return;
+  }
+  el.innerHTML = categories.map(c => {
+    const assetCount = assets.filter(a => a.category === c.name).length;
+    return `<div class="cat-row">
+      <div class="cat-color-dot" style="background:${esc(c.color||'#0099cc')}"></div>
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:13px">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">${assetCount} asset${assetCount!==1?'s':''} · ${c.is_consumable?'consumable':'returnable'}</div>
+      </div>
+      <span class="badge" style="${catBadgeStyle(c.name)}">${esc(c.name)}</span>
+      ${c.is_consumable?'<span style="font-size:10px;color:var(--warn);font-family:var(--mono);margin-left:8px">consumable</span>':''}
+      <div style="display:flex;gap:6px;margin-left:12px">
+        <button class="btn sm sec" onclick="openEditCat('${esc(c.id)}')">Edit</button>
+        <button class="btn sm danger" onclick="deleteCat('${esc(c.id)}')">Del</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddCatModal() {
+  if (!requireAdmin()) return;
+  editingCatId = null;
+  document.getElementById('cat-modal-title').textContent = 'New Category';
+  document.getElementById('cat-name').value = '';
+  document.getElementById('cat-color').value = '#0099cc';
+  document.getElementById('cat-is-consumable').checked = false;
+  document.getElementById('add-cat-modal').classList.add('open');
+}
+function openEditCat(id) {
+  if (!requireAdmin()) return;
+  const c = categories.find(x => x.id === id); if(!c) return;
+  editingCatId = id;
+  document.getElementById('cat-modal-title').textContent = 'Edit Category';
+  document.getElementById('cat-name').value = c.name;
+  document.getElementById('cat-color').value = c.color || '#0099cc';
+  document.getElementById('cat-is-consumable').checked = !!c.is_consumable;
+  document.getElementById('add-cat-modal').classList.add('open');
+}
+
+async function saveCat() {
+  if (!requireAdmin()) return;
+  const name = document.getElementById('cat-name').value.trim();
+  if (!name) { toast('Category name is required', 'err'); return; }
+  const color = document.getElementById('cat-color').value;
+  const is_consumable = document.getElementById('cat-is-consumable').checked;
+
+  try {
+    if (editingCatId) {
+      await sbUpdate('categories', editingCatId, { name, color, is_consumable });
+      const idx = categories.findIndex(c => c.id === editingCatId);
+      categories[idx] = { ...categories[idx], name, color, is_consumable };
+      await addAdminLog('Edited category: ' + name);
+      toast('Category updated', 'ok');
+    } else {
+      if (categories.find(c => c.name === name)) { toast('Category already exists', 'err'); return; }
+      const newCat = { id: uid(), name, color, is_consumable, created_at: now() };
+      await sbInsert('categories', newCat);
+      categories.push(newCat);
+      await addAdminLog('Created category: ' + name);
+      toast('Category created', 'ok');
+    }
+    closeModal('add-cat-modal');
+    populateCategoryDropdowns();
+    renderCatList();
+  } catch(e) { toast('Error saving category: ' + e.message, 'err'); }
+}
+
+async function deleteCat(id) {
+  if (!requireAdmin()) return;
+  const c = categories.find(x => x.id === id); if(!c) return;
+  const used = assets.filter(a => a.category === c.name).length;
+  if (used > 0) { toast(`Cannot delete: ${used} asset(s) use this category`, 'err'); return; }
+  if (!confirm(`Delete category "${c.name}"?`)) return;
+  try {
+    await sbDelete('categories', id);
+    categories = categories.filter(x => x.id !== id);
+    await addAdminLog('Deleted category: ' + c.name);
+    populateCategoryDropdowns();
+    renderCatList();
+    toast('Category deleted');
+  } catch(e) { toast('Error deleting category: ' + e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  USER MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function openAddUserModal() {
+  if (!currentUser || !currentUser.isSuperAdmin) { toast('Only super-admins can create accounts', 'err'); return; }
+  ['u-name','u-position','u-username','u-pass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-user-modal').classList.add('open');
+}
+async function saveUser() {
+  const name = document.getElementById('u-name').value.trim();
+  const position = document.getElementById('u-position').value.trim();
+  const username = document.getElementById('u-username').value.trim();
+  const pass = document.getElementById('u-pass').value;
+  if (!name||!position||!username||!pass) { toast('All fields required', 'err'); return; }
+  if (pass.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+  if (admins.find(a => a.username === username)) { toast('Username already exists', 'err'); return; }
+  const newAdmin = { id: uid(), name, position, username, pass_hash: hashPass(pass), is_super_admin: false, created_at: now() };
+  try {
+    await sbInsert('admins', newAdmin);
+    admins.push(newAdmin);
+    await addAdminLog('Created account for ' + name + ' (' + username + ')');
+    closeModal('add-user-modal');
+    renderUserList();
+    toast('Admin account created for ' + name, 'ok');
+  } catch(e) { toast('Error creating user: ' + e.message, 'err'); }
+}
+async function deleteAdmin(id) {
+  const a = admins.find(x => x.id === id); if(!a) return;
+  if (a.is_super_admin) { toast('Cannot remove super-admin account', 'err'); return; }
+  if (id === currentUser.id) { toast('Cannot remove your own account', 'err'); return; }
+  if (!confirm('Remove admin account for ' + a.name + '?')) return;
+  try {
+    await sbDelete('admins', id);
+    admins = admins.filter(x => x.id !== id);
+    await addAdminLog('Removed account for ' + a.name + ' (' + a.username + ')');
+    renderUserList();
+    toast('Account removed');
+  } catch(e) { toast('Error removing account: ' + e.message, 'err'); }
+}
+function renderUserList() {
+  const el = document.getElementById('user-list'); if(!el) return;
+  if (!admins.length) { el.innerHTML = '<div class="empty"><p>No admins configured</p></div>'; return; }
+  el.innerHTML = admins.map(a => {
+    const col = avatarColor(a.id);
+    const isSelf = a.id === currentUser?.id;
+    return `<div class="user-card">
+      <div class="user-card-info">
+        <div class="user-card-avatar" style="background:${col}22;color:${col}">${initials(a.name)}</div>
+        <div>
+          <div style="font-weight:600;font-size:13px">${esc(a.name)} ${isSelf?'<span style="font-size:10px;color:var(--accent-bright);font-family:var(--mono)">(you)</span>':''}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(a.position)} &nbsp;·&nbsp; <span style="font-family:var(--mono)">${esc(a.username)}</span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${a.is_super_admin?'<span class="badge b-admin">Super Admin</span>':'<span class="badge b-viewer">Admin</span>'}
+        ${!a.is_super_admin && currentUser?.isSuperAdmin?`<button class="btn sm danger" onclick="deleteAdmin('${a.id}')">Remove</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  renderAdminLog();
+}
+async function addAdminLog(action) {
+  if (!currentUser) return;
+  const entry = { admin_name: currentUser.name, position: currentUser.position, action, date: now() };
+  adminLog.push({ adminName: currentUser.name, position: currentUser.position, action, date: now() });
+  if (adminLog.length > 200) adminLog = adminLog.slice(-200);
+  try { await sbInsert('admin_log', entry); } catch(e) { console.warn('admin_log insert failed', e); }
+}
+function renderAdminLog() {
+  const tbody = document.getElementById('admin-log-tbody'); if(!tbody) return;
+  const entries = [...adminLog].reverse().slice(0, 50);
+  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty" style="padding:24px"><p>No admin actions recorded</p></div></td></tr>'; return; }
+  tbody.innerHTML = entries.map(e => `<tr>
+    <td style="font-weight:500">${esc(e.adminName)}</td>
+    <td style="color:var(--muted);font-size:12px">${esc(e.position)}</td>
+    <td>${esc(e.action)}</td>
+    <td style="color:var(--muted);font-size:11px;font-family:var(--mono)">${esc(e.date)}</td>
+  </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(type?' '+type:'');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ════════════════════════════════════════════════════════════
+//  BOOT — default view only, no login required
+// ════════════════════════════════════════════════════════════
+async function boot() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+    alert('⚠️ Fill in your SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script.');
+    return;
+  }
+
+  // Pre-load admins so login can work
+  try {
+    admins = await sbGet('admins');
+    if (!admins.length) await seedAdmins();
+  } catch(e) {
+    console.error('Could not reach Supabase', e);
+  }
+
+  // Restore session
+  try {
+    const sess = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (sess && sess.role === 'admin') {
+      const still = admins.find(a => a.id === sess.id);
+      if (still) { currentUser = sess; await bootApp(); return; }
+      localStorage.removeItem(SESSION_KEY);
+    }
+  } catch(e) {}
+
+  // Always go straight to view-only — no landing screen
+  await enterViewOnly();
+}
+
+boot();
+</script>
+</body>
+</html>
